@@ -1,0 +1,34 @@
+Package: oppar
+Type: Package
+Title: Outlier profile and pathway analysis in R
+Version: 0.99.5
+Date: 2016
+Authors@R: c( person("Chenwei", "Wang", email =
+        "chenwei.wang@qut.edu.au", role = "aut"), person("Alperen",
+        "Taciroglu", role = "aut"), person("Stefan R", "Maetschke",
+        role = "aut"), person("Colleen C", "Nelson", role = "aut"),
+        person("Mark", "Ragan", role = "aut"), person("Melissa",
+        "Davis", email = "davis.m@wehi.edu.au", role = "aut"),
+        person("Soroor", "Hediyeh zadeh", email =
+        "hediyehzadeh.s@wehi.edu.au",role = "cre"),
+        person("Momeneh","Foroutan", email=
+        "mforoutan@student.unimelb.edu.au", role = "ctr"))
+Description: A R implementation of mCOPA package published by Wang et
+        al. (2012).
+biocViews: Pathways, GeneSetEnrichment, SystemsBiology, GeneExpression,
+        Software
+Depends: R (>= 3.3)
+Imports: Biobase, methods, GSEABase, GSVA
+License: GPL-2
+LazyData: true
+Collate: 'class_OPPARList.R' 'class_nuchar.R' 'getSampleOutlier.R'
+        'getSubtypeProbes.R' 'gsva.R' 'opa-generic-methods.R' 'oppar.R'
+        'utils.R' 'zzz.R'
+RoxygenNote: 5.0.1
+Suggests: knitr, rmarkdown, limma, org.Hs.eg.db, GO.db, snow, parallel
+VignetteBuilder: knitr
+NeedsCompilation: yes
+Author: Chenwei Wang [aut], Alperen Taciroglu [aut], Stefan R Maetschke
+        [aut], Colleen C Nelson [aut], Mark Ragan [aut], Melissa Davis
+        [aut], Soroor Hediyeh zadeh [cre], Momeneh Foroutan [ctr]
+Maintainer: Soroor Hediyeh zadeh <hediyehzadeh.s@wehi.edu.au>
