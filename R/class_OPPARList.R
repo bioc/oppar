@@ -26,7 +26,7 @@ setMethod("show","OPPARList", function(object){
 	cat(sprintf("Lower quantile: %.2f", object@lower.quantile), sep = "\n" )
 	levels(object@group) <- c("0","1")
 	cat("Groups:", sep = "\n")
-	print(object@group)
+	print(head(object@group, n = 10))
 
 
 })

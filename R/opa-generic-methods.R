@@ -11,7 +11,7 @@
 #' @param exprs.matrix Gene expression data. Can be either a matrix or an
 #'   object of type ExpressionSet.
 #' @param group A vector of factors representing the groups to which each sample belong.
-#'   This can be either a vector of 0s and 1s, or normal and cases.
+#'   This can be either a vector of 0s (denoting normal samples) and 1s (denoting cancer samples), or normal and cancer (case insensitive).
 #' @param lower.quantile Numeric. The cut-off for lower quantile when determining outliers.
 #'   Default to 0.05
 #' @param  upper.quantile Numeric. The cut-off for upper quantile when determining outliers.
@@ -49,7 +49,11 @@ setMethod("opa", signature(exprs.matrix = "matrix"),
 						if (length(group) != ncol(exprs.matrix)) {
 							stop(sprintf("number of elements in group doesn't match the number of columns. Expected %d, received %d",
 													 ncol(exprs.matrix),length(group)))}
-						if (!all(levels(group) == c("0","1"))) levels(group) = c("0","1")
+						if (!all(levels(group) == c("0","1"))){
+						  
+						  group <- relevel(as.factor(tolower(group)), ref="normal")
+						  levels(group) <- as.factor(c(0,1))
+						} 
 
 	outlier_profile_matrix <- apply(exprs.matrix, 1, FUN=function(x){
 		MAD = mad(x,na.rm = TRUE)
@@ -66,52 +70,78 @@ setMethod("opa", signature(exprs.matrix = "matrix"),
 
 			up.outlier.thr <- quantile.vals["75%","1"] + 1.5 * IQR(exprs.transformed[which(group == 1)], na.rm = TRUE)
 			down.outlier.thr <- quantile.vals["25%","1"] - 1.5 * IQR(exprs.transformed[which(group == 1)], na.rm = TRUE)
-
-			# adjustment value if any of the quantiles is 0
+			
+			# outlier in normal samples
+			up.thresh.normal.gr <- quantile.vals["75%","0"] + 1.5 * IQR(exprs.transformed[which(group == 0)], na.rm = TRUE)
+      dwn.thresh.normal.gr <- quantile.vals["25%","0"] - 1.5 * IQR(exprs.transformed[which(group == 0)], na.rm = TRUE)
+			
+      # adjustment value if any of the quantiles is 0
 			adj.val <- ifelse(any(as.vector(quantile.vals[5:6,]) == 0),  0.1, 0)
 			down.fc <- log2(abs((quantile.vals[paste0(lower.quantile * 100, "%"),"1"] + adj.val)/(quantile.vals[paste0(lower.quantile * 100, "%"), "0"] + adj.val)))
 			up.fc <- log2(abs((quantile.vals[paste0(upper.quantile * 100, "%"), "1"] + adj.val)/(quantile.vals[paste0(upper.quantile * 100, "%"), "0"] + adj.val)))
 
-			# --------- There is a problem here ------------ #
+			
 
 			# up outliers -------------------------------------
-			is.up.outlier.cspls <- exprs.transformed[which(group == 1)] > up.outlier.thr
-			null.vec.up.cspls <- logical(length(group))
-			null.vec.up.cspls[which(group == 1)] <- is.up.outlier.cspls
-			is.up.outlier.cspls <- null.vec.up.cspls
-
-			is.up.outlier.nspls <- exprs.transformed[which(group == 0)] > up.outlier.thr
-			null.vec.up.nspls <- logical(length(group))
-			null.vec.up.nspls[which(group == 0)] <- is.up.outlier.nspls
-			is.up.outlier.nspls <- null.vec.up.nspls
-
+			# is.up.outlier.cspls <- exprs.transformed[which(group == 1)] > up.outlier.thr
+			# null.vec.up.cspls <- logical(length(group))
+			# null.vec.up.cspls[which(group == 1)] <- is.up.outlier.cspls
+			# is.up.outlier.cspls <- null.vec.up.cspls
+			# 
+			# is.up.outlier.nspls <- exprs.transformed[which(group == 0)] > up.thresh.normal.gr
+			# null.vec.up.nspls <- logical(length(group))
+			# null.vec.up.nspls[which(group == 0)] <- is.up.outlier.nspls
+			# is.up.outlier.nspls <- null.vec.up.nspls
+      # alternative implementation  to up regulated outlier ------------------------
+			up.outlier.vec <- logical(length(group))
+			cancer.idx <- which(group == 1)
+			normal.idx <- which(group == 0)
+			up.outlier.vec[cancer.idx] <- exprs.transformed[which(group == 1)] > up.outlier.thr
+			up.outlier.vec[normal.idx] <- exprs.transformed[which(group == 0)] > up.thresh.normal.gr
 			is.sig.up <- abs(up.fc) >= 2
+			
+			if(all(any(up.outlier.vec[cancer.idx]), !all(up.outlier.vec[normal.idx]), is.sig.up)){
+			  idx <- which(exprs.transformed[cancer.idx] > up.outlier.thr)
+			  exprs.transformed[idx] <- 1              
+			}
+			
 
 			# down outliers --------------------------------
-			is.down.outlier.cspls <- exprs.transformed[which(group == 1)] < down.outlier.thr
-			null.vec.down.cspls <- logical(length(group))
-			null.vec.down.cspls[which(group == 1)] <- is.down.outlier.cspls
-			is.down.outlier.cspls <- null.vec.down.cspls
-
-			is.down.outlier.nspls <- exprs.transformed[which(group == 0)] < down.outlier.thr
-			null.vec.down.nspls <- logical(length(group))
-			null.vec.down.nspls[which(group == 0)] <- is.down.outlier.nspls
-			is.down.outlier.nspls <- null.vec.down.nspls
-
+			# is.down.outlier.cspls <- exprs.transformed[which(group == 1)] < down.outlier.thr
+			# null.vec.down.cspls <- logical(length(group))
+			# null.vec.down.cspls[which(group == 1)] <- is.down.outlier.cspls
+			# is.down.outlier.cspls <- null.vec.down.cspls
+			# 
+			# is.down.outlier.nspls <- exprs.transformed[which(group == 0)] < down.outlier.thr
+			# null.vec.down.nspls <- logical(length(group))
+			# null.vec.down.nspls[which(group == 0)] <- is.down.outlier.nspls
+			# is.down.outlier.nspls <- null.vec.down.nspls
+			# 
+			# is.sig.down <- abs(down.fc) >= 2
+			# up.filtered.index <- lapply(list(is.up.outlier.cspls, !is.up.outlier.nspls), which)
+			# 
+			# if(all(((sum(is.up.outlier.nspls, na.rm = TRUE) + sum(is.up.outlier.cspls, na.rm = TRUE)) >= 1), is.sig.up )){
+			# 	up.filter.index <- Reduce(intersect,up.filtered.index)
+			# 	exprs.transformed[up.filter.index] <- 1
+			# 
+			# }
+			# 
+			# if(all(((sum(is.down.outlier.nspls, na.rm = TRUE) + sum(is.down.outlier.cspls, na.rm = TRUE)) >= 1),is.sig.down)){
+			# 	down.filtered.index <- sapply(list(is.down.outlier.cspls, !is.down.outlier.nspls), which )
+			# 	exprs.transformed[Reduce(intersect, down.filtered.index)] <- -1
+			# 
+			# 
+			# }
+			# 
+			# alternative implementation  to down regulated outlier ------------------------
+			down.outlier.vec <- logical(length(group))
+			down.outlier.vec[cancer.idx] <- exprs.transformed[which(group == 1)] < down.outlier.thr
+			down.outlier.vec[normal.idx] <- exprs.transformed[which(group == 0)] < dwn.thresh.normal.gr
 			is.sig.down <- abs(down.fc) >= 2
-			up.filtered.index <- lapply(list(is.up.outlier.cspls, !is.up.outlier.nspls), which)
-
-			if(all(((sum(is.up.outlier.nspls, na.rm = TRUE) + sum(is.up.outlier.cspls, na.rm = TRUE)) >= 1), is.sig.up )){
-				up.filter.index <- Reduce(intersect,up.filtered.index)
-				exprs.transformed[up.filter.index] <- 1
-
-			}
-
-			if(all(((sum(is.down.outlier.nspls, na.rm = TRUE) + sum(is.down.outlier.cspls, na.rm = TRUE)) >= 1),is.sig.down)){
-				down.filtered.index <- sapply(list(is.down.outlier.cspls, !is.down.outlier.nspls), which )
-				exprs.transformed[Reduce(intersect, down.filtered.index)] <- -1
-
-
+			
+			if(all(any(down.outlier.vec[cancer.idx]), !all(down.outlier.vec[normal.idx]), is.sig.down)){
+			  idx <- which(exprs.transformed[cancer.idx] < down.outlier.thr)
+			  exprs.transformed[idx] <- -1              
 			}
 
 
@@ -135,7 +165,7 @@ setMethod("opa", signature(exprs.matrix = "matrix"),
 	outlier_profile_matrix <- outlier_profile_matrix[which(group == 1), ] # change here  to 1 later
 	new("OPPARList", profileMatrix = t(outlier_profile_matrix),
 			upper.quantile = upper.quantile, lower.quantile = lower.quantile,
-			group = group[which(group == 1)])
+			group = as.factor(group[which(group == 1)]))
 
  })
 
