@@ -1,3 +1,14 @@
-VERSION 1.0.0
----------------
+CHANGES IN VERSION 1.2.0
+------------------------
+
+BUG FIXES
+
+    o Enhance opa() function:
+      - Improve speed and simplicity of the code
+      - Improve grouping normal/cancer samples. Previously a
+        factor vector passed to group argument would have failed to 
+        identify normal/cancer samples correctly.
+
+CHANGES IN VERSION 1.0.0
+------------------------
 Initial release
