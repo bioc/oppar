@@ -110,7 +110,7 @@ We can then obtain a list of GO terms from `org.Hs.eg.db`. Each element of the l
 
 ```{r}
 # gene set testing with limma::mroast
-#biocLite(org.Hs.eg.db)
+#BiocManager::install(org.Hs.eg.db)
 library(org.Hs.eg.db)
 library(limma)
 org.Hs.egGO2EG
@@ -149,7 +149,7 @@ The GO terms for the first 10 GO Ids detected by `mroast` can be retrieved in th
 
 ```{r}
 go.terms <- rownames(up.mroast[1:10,])
-#biocLite(GO.db)
+#BiocManager::install(GO.db)
 library(GO.db)
 columns(GO.db)
 keytypes(GO.db)
