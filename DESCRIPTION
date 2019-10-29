@@ -1,7 +1,7 @@
 Package: oppar
 Type: Package
 Title: Outlier profile and pathway analysis in R
-Version: 1.14.0
+Version: 1.15.0
 Date: 2016
 Authors@R: c(
     person("Chenwei", "Wang", email = "chenwei.wang@qut.edu.au", role = "aut"),
